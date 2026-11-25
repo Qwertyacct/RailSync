@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Train Results – RailSync</title><link rel="stylesheet" href="/css/style.css"></head>
+<body><div class="nav" id="nav"></div>
+<div class="container"><h2 id="title">Searching…</h2><div id="msg"></div><div id="results"></div></div>
+<script src="/js/api.js"></script>
+<script>
+renderNav();
+const p = new URLSearchParams(location.search);
+title.textContent = `Trains from ${p.get('from')} to ${p.get('to')} on ${p.get('date')}`;
+api('/trains/search?' + p).then((trains) => {
+  if (!trains.length) { results.innerHTML = '<div class="empty">No trains found for this route and date.</div>'; return; }
+  results.innerHTML = trains.map((t) => `
+    <div class="card train">
+      <div class="train-head"><h3>${esc(t.train_number)} · ${esc(t.train_name)}</h3><span class="badge">${esc(t.train_type)}</span></div>
+      <div class="times"><span>${fmtTime(t.departure_time)}</span><span class="dur">── ${fmtDuration(t.duration_min)} ──</span><span>${fmtTime(t.arrival_time)}</span></div>
+      <div class="meta">${esc(t.distance_km)} km · <a href="/pages/train-details.html?id=${t.train_id}">View route</a></div>
+      <div class="classes" style="margin-top:12px">${t.classes.map((c) => {
+        const n = Number(c.available_seats), k = n === 0 ? 'none' : n < 20 ? 'low' : 'ok';
+        return `<div class="cls"><b>${esc(c.class_code)}</b> <span class="meta">${esc(c.class_name)}</span><br>
+          ₹${esc(c.fare_per_passenger)}<br><span class="seats ${k}">${n === 0 ? 'Sold out' : n + ' seats left'}</span></div>`;
+      }).join('')}</div>
+    </div>`).join('');
+}).catch((e) => { msg.innerHTML = `<div class="msg err">${esc(e.message)}</div>`; });
+</script></body></html>
