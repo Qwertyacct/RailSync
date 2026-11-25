@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RailSync – Smart Railway Reservation</title><link rel="stylesheet" href="/css/style.css"></head>
+<body>
+<div class="nav" id="nav"></div>
+<section class="hero"><h1>Book your journey with RailSync</h1><p>Search trains, check seats, book and manage tickets.</p></section>
+<div class="container">
+  <form class="card search-card" id="searchForm">
+    <div><label for="from">From (station)</label><input id="from" list="stations" placeholder="e.g. New Delhi" required></div>
+    <div><label for="to">To (station)</label><input id="to" list="stations" placeholder="e.g. Bhopal" required></div>
+    <div><label for="date">Journey date</label><input type="date" id="date" required></div>
+    <button type="submit">Search Trains</button>
+  </form>
+  <datalist id="stations"></datalist>
+  <div id="msg"></div>
+</div>
+<script src="/js/api.js"></script>
+<script>
+renderNav();
+const byLabel = {};
+document.getElementById('date').min = new Date().toISOString().slice(0, 10);
+api('/stations').then((list) => {
+  document.getElementById('stations').innerHTML = list.map((s) => {
+    const label = `${s.station_name} (${s.station_code})`; byLabel[label] = s.station_code;
+    return `<option value="${esc(label)}">`;
+  }).join('');
+}).catch(() => {});
+const code = (v) => byLabel[v] || v.trim().toUpperCase();
+document.getElementById('searchForm').onsubmit = (e) => {
+  e.preventDefault();
+  const q = new URLSearchParams({ from: code(from.value), to: code(to.value), date: date.value });
+  location.href = '/pages/search-results.html?' + q;
+};
+</script></body></html>
